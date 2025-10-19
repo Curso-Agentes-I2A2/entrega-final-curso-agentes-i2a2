@@ -10,9 +10,9 @@ Bem-vindo ao projeto! Este README contém todas as informações necessárias
 para você trabalhar de forma autônoma no seu módulo.
 
 ##  🎯Pastas 
-
-             ✅ planejamento: documentos de apoio e orientações.
-             ✅ prompt      : prompts para cada parte do projeto.
+             ✅ audit-nf-system  : estrutura do projeto, pastas e arquivos
+             ✅ planejamento     : documentos de apoio e orientações.
+             ✅ prompt           : prompts para cada parte do projeto.
 
 ---
 
