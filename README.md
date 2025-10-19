@@ -6,7 +6,11 @@ Sistema modular para auditoria automatizada de notas fiscais usando IA, RAG, Age
 
 ## 👥 Guia para Colaboradores
 
-Bem-vindo ao projeto! Este README contém todas as informações necessárias para você trabalhar de forma autônoma no seu módulo.
+Bem-vindo ao projeto! Este README contém todas as informações necessárias 
+para você trabalhar de forma autônoma no seu módulo.
+
+##  Pasta planejamento , documentos de apoio e orientações.
+##  Pasta prompt , prompts para cada parte do projeto.
 
 ---
 
