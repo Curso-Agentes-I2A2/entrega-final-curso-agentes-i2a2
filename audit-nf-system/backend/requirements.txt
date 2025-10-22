@@ -1,0 +1,33 @@
+# FastAPI e servidor
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+
+# Banco de dados
+sqlalchemy==2.0.25
+psycopg2-binary==2.9.9
+alembic==1.13.1
+
+# Validação e configuração  --- Data Validation and Settings ---
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# Autenticação e segurança 
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-dateutil==2.8.2
+
+# Cliente HTTP
+httpx==0.26.0 # Para cliente HTTP assíncrono (RAG Client)
+
+# Processamento de XML
+lxml==5.1.0
+
+# Utilidades
+python-dotenv==1.0.0
+uuid6==2024.1.12
+
+# Logging e monitoramento
+structlog==24.1.0
+asyncpg
+
