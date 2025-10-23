@@ -30,7 +30,7 @@ para você trabalhar de forma autônoma no seu módulo.
 
 ```bash
 # Clone o repositório
-git clone https://github.com/[ORGANIZAÇÃO]/audit-nf-system.git
+git clone https://github.com/Curso-Agentes-I2A2/entrega-final-curso-agentes-i2a2.git
 cd audit-nf-system
 ```
 
@@ -43,8 +43,8 @@ git branch -a
 # Mudar para seu branch
 git checkout branch/[seu-nome]
 
-# Exemplo: se você trabalha no backend
-git checkout branch/backend
+# Exemplo: se você jose
+git checkout branch/jose
 ```
 
 ### 3. Configure seu Ambiente
@@ -60,7 +60,7 @@ source venv/bin/activate
 venv\Scripts\activate
 
 # Instalar dependências do seu módulo
-cd [SEU-MODULO]
+cd [MODULO]
 pip install -r requirements.txt
 ```
 
