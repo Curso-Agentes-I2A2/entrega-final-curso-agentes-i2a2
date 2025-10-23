@@ -24,20 +24,6 @@ para você trabalhar de forma autônoma no seu módulo.
 - ✅ Cada módulo tem seu próprio **Dockerfile**
 - ✅ Integração acontece depois através de **Pull Requests**
 
-### Estrutura de Branches
-```
-main (baseado em llm-examples)
-├── branch/backend
-├── branch/rag
-├── branch/agents
-├── branch/mcp
-├── branch/frontend
-├── branch/tests
-└── branch/security
-```
-
----
-
 ## 🚀 Começando
 
 ### 1. Clone o Repositório
