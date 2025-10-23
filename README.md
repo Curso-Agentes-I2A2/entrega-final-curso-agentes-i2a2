@@ -7,7 +7,7 @@ Sistema modular para auditoria automatizada de notas fiscais usando IA, RAG, Age
 ## 👥 Guia para Colaboradores
 
 Bem-vindo ao projeto! Este README contém todas as informações necessárias 
-para você trabalhar de forma autônoma no seu módulo.
+para você trabalhar de forma autônoma no respectivo branch que é o seu nome.
 
 ##  🎯Pastas 
              ✅ audit-nf-system  : estrutura do projeto, pastas e arquivos
