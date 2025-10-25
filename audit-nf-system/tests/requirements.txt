@@ -1,0 +1,9 @@
+pytest>=7.0
+pytest-asyncio
+pytest-mock
+pytest-cov
+httpx
+playwright
+locust
+faker
+numpy
