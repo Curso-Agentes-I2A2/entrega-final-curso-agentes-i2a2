@@ -6,15 +6,14 @@ Sistema modular para auditoria automatizada de notas fiscais usando IA, RAG, Age
 
 ## 👥 Guia para Colaboradores
 
-Bem-vindo ao projeto! Este README contém todas as informações necessárias 
-para você trabalhar de forma autônoma no seu módulo.
+Bem-vindo ao projeto! Este README contém as informações necessárias 
+para que cada um possa trabalhar de forma autônoma no respectivo módulo escolhido.
 
 ##  🎯Pastas 
-             ✅ audit-nf-system  : estrutura do projeto, pastas e arquivos
-             ✅ planejamento     : documentos de apoio e orientações.
-             ✅ prompt           : prompts para cada parte do projeto.
-
----
+            ✅ projeto          : requisitos e analises. 
+            ✅ planejamento     : documentos de apoio e orientações.
+            ✅ prompt           : prompts para cada parte do projeto.
+            ✅ audit-nf-system  : estrutura do projeto, pastas e arquivos
 
 ## 🎯 Filosofia de Trabalho
 
@@ -23,20 +22,6 @@ para você trabalhar de forma autônoma no seu módulo.
 - ✅ Cada módulo pode funcionar **independentemente** (usando mocks quando necessário)
 - ✅ Cada módulo tem seu próprio **Dockerfile**
 - ✅ Integração acontece depois através de **Pull Requests**
-
-### Estrutura de Branches
-```
-main (baseado em llm-examples)
-├── branch/backend
-├── branch/rag
-├── branch/agents
-├── branch/mcp
-├── branch/frontend
-├── branch/tests
-└── branch/security
-```
-
----
 
 ## 🚀 Começando
 
