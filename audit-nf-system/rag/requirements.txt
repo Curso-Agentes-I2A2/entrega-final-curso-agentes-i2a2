@@ -1,0 +1,25 @@
+# rag/requirements.txt
+
+# Core RAG framework
+langchain
+langchain-community
+langchain-openai
+
+# Vector Store
+chromadb
+
+# Embeddings
+openai
+sentence-transformers # For local fallback
+torch # Dependency for sentence-transformers
+
+# API Framework
+fastapi
+uvicorn[standard]
+
+# Configuration Management
+pydantic-settings
+python-dotenv
+
+# Opcional: Reranking
+cohere
