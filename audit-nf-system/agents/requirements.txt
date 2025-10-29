@@ -1,0 +1,22 @@
+# Core Frameworks
+langchain
+langchain-community
+langchain-anthropic
+langchain-openai
+langchain-core
+langchain-google-genai
+fastapi
+uvicorn[standard]
+
+# HTTP and Async
+httpx
+aiohttp # Often used by LangChain for async operations
+
+# Data Validation and Config
+pydantic
+python-dotenv
+
+# For development and testing
+pytest
+pytest-asyncio
+requests
