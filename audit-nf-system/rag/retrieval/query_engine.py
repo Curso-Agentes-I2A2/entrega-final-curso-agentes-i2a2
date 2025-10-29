@@ -55,3 +55,4 @@ class QueryEngine:
 #         print(f"Score: {score:.4f}")
 #         print(f"Fonte: {doc.metadata.get('source')}")
 #         print(f"Conteúdo: {doc.page_content[:200]}...\n")
+

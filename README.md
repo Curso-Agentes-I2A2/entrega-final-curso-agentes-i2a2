@@ -6,8 +6,9 @@ Sistema modular para auditoria automatizada de notas fiscais usando IA, RAG, Age
 
 ## 👥 Guia para Colaboradores
 
-Bem-vindo ao projeto! Este README contém as informações necessárias 
-para que cada um possa trabalhar de forma autônoma no respectivo módulo escolhido.
+Bem-vindo ao projeto! Este README contém todas as informações necessárias 
+para você trabalhar de forma autônoma no respectivo branch que é o seu nome.
+
 
 ##  🎯Pastas 
             ✅ projeto          : requisitos e analises. 
@@ -29,7 +30,7 @@ para que cada um possa trabalhar de forma autônoma no respectivo módulo escolh
 
 ```bash
 # Clone o repositório
-git clone https://github.com/[ORGANIZAÇÃO]/audit-nf-system.git
+git clone https://github.com/Curso-Agentes-I2A2/entrega-final-curso-agentes-i2a2.git
 cd audit-nf-system
 ```
 
@@ -40,10 +41,11 @@ cd audit-nf-system
 git branch -a
 
 # Mudar para seu branch
-git checkout branch/[SEU-NOME]
 
-# Exemplo: se você trabalha no backend
-git checkout branch/backend
+git checkout branch/[seu-nome]
+
+# Exemplo: se você jose
+git checkout branch/jose
 ```
 
 ### 3. Configure seu Ambiente
@@ -59,7 +61,7 @@ source venv/bin/activate
 venv\Scripts\activate
 
 # Instalar dependências do seu módulo
-cd [SEU-MODULO]
+cd [MODULO]
 pip install -r requirements.txt
 ```
 
@@ -71,7 +73,9 @@ pip install -r requirements.txt
 
 ```bash
 # 1. Sempre começar atualizando seu branch
-git pull origin branch/[SEU-NOME]
+
+git pull origin branch/[seu-nome]
+
 
 # 2. Verificar status dos arquivos
 git status
@@ -85,7 +89,7 @@ git add arquivo1.py arquivo2.py
 git commit -m "feat: adiciona processamento de XML de notas fiscais"
 
 # 5. Enviar para o repositório remoto
-git push origin branch/[SEU-MODULO]
+git push origin branch/[seu-nome]
 ```
 
 ### Convenções de Mensagens de Commit
@@ -116,19 +120,23 @@ Quando seu módulo estiver pronto para integração:
 
 ```bash
 # 1. Certifique-se que está no seu branch
-git checkout branch/[SEU-NOME]
+
+git checkout branch/[seu-nome]
 
 # 2. Atualize com as últimas mudanças
-git pull origin branch/[SEU-NOME]
+git pull origin branch/[seu-nome]
 
 # 3. Faça push das suas mudanças
-git push origin branch/[SEU-NOME]
+git push origin branch/[seu-nome]
+
 
 # 4. Acesse o GitHub e crie um Pull Request
 # - Vá até: https://github.com/[ORGANIZAÇÃO]/audit-nf-system
 # - Clique em "Pull Requests" > "New Pull Request"
 # - Base: main
-# - Compare: branch/[SEU-NOME]
+
+# - Compare: branch/[seu-nome]
+
 # - Descreva suas mudanças e crie o PR
 
 # 5. Aguarde revisão da equipe antes do merge
@@ -140,7 +148,9 @@ Se houver conflitos ao fazer merge:
 
 ```bash
 # 1. Atualizar com a main
-git checkout branch/[SEU-NOME]
+
+git checkout branch/[seu-nomeO]
+
 git pull origin main
 
 # 2. Resolver conflitos manualmente nos arquivos
@@ -153,7 +163,9 @@ git add .
 git commit -m "merge: resolve conflitos com main"
 
 # 5. Fazer push
-git push origin branch/[SEU-NOME]
+
+git push origin branch/[seu-nome]
+
 ```
 
 ### Comandos Úteis
@@ -555,11 +567,12 @@ Detalhes serão definidos conforme evolução do projeto.
 ### Cronograma 
 
 ```
-✅  1: Setup inicial e estrutura
-🔄  2: Proposta de arquitetura (VOCÊ ESTÁ AQUI)
-⏳  3: Implementação dos módulos
-⏳  4: Integração e testes
-⏳  5: Deploy e refinamentos
+✅ 1: Setup inicial e estrutura
+🔄 2: Proposta de arquitetura (VOCÊ ESTÁ AQUI)
+⏳ 3: Implementação dos módulos
+⏳ 4: Integração e testes
+⏳ 5: Deploy e refinamentos
+
 ```
 
 ### Checklist de Setup
@@ -601,6 +614,7 @@ Detalhes serão definidos conforme evolução do projeto.
 - 💬 Peça ajuda sem receio!
 
 **Última atualização:** 23/10/2025  
+
 **Versão:** 1.0
 
 Boa sorte e bom código! 🚀
