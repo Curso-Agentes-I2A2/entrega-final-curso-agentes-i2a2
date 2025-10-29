@@ -11,16 +11,45 @@ env/
 .env
 *.env
 !.env.example
+.env.local
 
 # Logs
 *.log
 agents.log
 
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp
+*.swo
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Docker
+*.pid
+.docker/
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Build
+dist/
+build/
+*.egg-info/
+
+# Streamlit
+.streamlit/secrets.toml
