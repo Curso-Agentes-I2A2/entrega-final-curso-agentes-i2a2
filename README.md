@@ -40,7 +40,7 @@ cd audit-nf-system
 git branch -a
 
 # Mudar para seu branch
-git checkout branch/[SEU-MODULO]
+git checkout branch/[SEU-NOME]
 
 # Exemplo: se você trabalha no backend
 git checkout branch/backend
@@ -71,7 +71,7 @@ pip install -r requirements.txt
 
 ```bash
 # 1. Sempre começar atualizando seu branch
-git pull origin branch/[SEU-MODULO]
+git pull origin branch/[SEU-NOME]
 
 # 2. Verificar status dos arquivos
 git status
@@ -116,19 +116,19 @@ Quando seu módulo estiver pronto para integração:
 
 ```bash
 # 1. Certifique-se que está no seu branch
-git checkout branch/[SEU-MODULO]
+git checkout branch/[SEU-NOME]
 
 # 2. Atualize com as últimas mudanças
-git pull origin branch/[SEU-MODULO]
+git pull origin branch/[SEU-NOME]
 
 # 3. Faça push das suas mudanças
-git push origin branch/[SEU-MODULO]
+git push origin branch/[SEU-NOME]
 
 # 4. Acesse o GitHub e crie um Pull Request
 # - Vá até: https://github.com/[ORGANIZAÇÃO]/audit-nf-system
 # - Clique em "Pull Requests" > "New Pull Request"
 # - Base: main
-# - Compare: branch/[SEU-MODULO]
+# - Compare: branch/[SEU-NOME]
 # - Descreva suas mudanças e crie o PR
 
 # 5. Aguarde revisão da equipe antes do merge
@@ -140,7 +140,7 @@ Se houver conflitos ao fazer merge:
 
 ```bash
 # 1. Atualizar com a main
-git checkout branch/[SEU-MODULO]
+git checkout branch/[SEU-NOME]
 git pull origin main
 
 # 2. Resolver conflitos manualmente nos arquivos
@@ -153,7 +153,7 @@ git add .
 git commit -m "merge: resolve conflitos com main"
 
 # 5. Fazer push
-git push origin branch/[SEU-MODULO]
+git push origin branch/[SEU-NOME]
 ```
 
 ### Comandos Úteis
@@ -512,7 +512,7 @@ Detalhes serão definidos conforme evolução do projeto.
 ## 📚 Recursos de Referência
 
 ### Repositórios Base
-- **llm-examples** (nosso main) - Estrutura e padrões
+- Estrutura e padrões - MAIN
 - [Adicionar links dos repositórios de referência]
 
 ### Documentação Oficial
@@ -552,14 +552,14 @@ Detalhes serão definidos conforme evolução do projeto.
 
 ## 📊 Status do Projeto
 
-### Cronograma
+### Cronograma 
 
 ```
-✅ Semana 1: Setup inicial e estrutura
-🔄 Semana 2: Proposta de arquitetura (VOCÊ ESTÁ AQUI)
-⏳ Semana 3: Implementação dos módulos
-⏳ Semana 4: Integração e testes
-⏳ Semana 5: Deploy e refinamentos
+✅  1: Setup inicial e estrutura
+🔄  2: Proposta de arquitetura (VOCÊ ESTÁ AQUI)
+⏳  3: Implementação dos módulos
+⏳  4: Integração e testes
+⏳  5: Deploy e refinamentos
 ```
 
 ### Checklist de Setup
@@ -600,17 +600,7 @@ Detalhes serão definidos conforme evolução do projeto.
 - 🔍 Use `git status` frequentemente
 - 💬 Peça ajuda sem receio!
 
----
-
-## 📧 Contato
-
-**Coordenador:** [Nome]  
-**Email:** [email]  
-**GitHub:** [organização]
-
----
-
-**Última atualização:** 18/10/2025  
+**Última atualização:** 23/10/2025  
 **Versão:** 1.0
 
 Boa sorte e bom código! 🚀
