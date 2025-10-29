@@ -1,0 +1,30 @@
+{
+  "invoice": {
+    "numero": "000123",
+    "serie": "1",
+    "data_emissao": "2025-10-27",
+    "cnpj_emitente": "12345678000190",
+    "razao_social_emitente": "Empresa Exemplo LTDA",
+    "cnpj_destinatario": "98765432000199",
+    "razao_social_destinatario": "Cliente Teste SA",
+    "cfop": "5102",
+    "tipo_operacao": "venda",
+    "valor_produtos": 1000.00,
+    "valor_total": 1180.00,
+    "base_calculo_icms": 1000.00,
+    "aliquota_icms": 18.0,
+    "valor_icms": 180.00,
+    "aliquota_ipi": 0.0,
+    "valor_ipi": 0.00,
+    "valor_pis": 16.50,
+    "valor_cofins": 76.00,
+    "valor_desconto": 0.00,
+    "chave_acesso": "35251012345678000190550010000001231000000001",
+    "estado_emitente": "SP"
+  },
+  "context": {
+    "historico_fornecedor": "sem_pendencias",
+    "primeira_compra": false,
+    "observacoes": "Cliente regular"
+  }
+}
