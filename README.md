@@ -76,7 +76,6 @@ pip install -r requirements.txt
 
 git pull origin branch/[seu-nome]
 
-
 # 2. Verificar status dos arquivos
 git status
 
@@ -165,8 +164,6 @@ git commit -m "merge: resolve conflitos com main"
 # 5. Fazer push
 
 git push origin branch/[seu-nome]
-
-```
 
 ### Comandos Úteis
 
@@ -572,8 +569,6 @@ Detalhes serão definidos conforme evolução do projeto.
 ⏳ 3: Implementação dos módulos
 ⏳ 4: Integração e testes
 ⏳ 5: Deploy e refinamentos
-
-```
 
 ### Checklist de Setup
 
