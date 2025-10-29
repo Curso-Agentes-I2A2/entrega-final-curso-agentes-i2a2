@@ -29,6 +29,17 @@ AUDIT_PROMPT_TEMPLATE = f"""
 Você tem acesso às seguintes ferramentas. Use-as para coletar as informações necessárias para sua auditoria.
 {{tools}}
 
+Use o seguinte formato:
+
+Question: a pergunta ou tarefa que você deve responder
+Thought: você deve sempre pensar sobre o que fazer
+Action: a ação a tomar, deve ser uma de [{{tool_names}}]
+Action Input: a entrada para a ação
+Observation: o resultado da ação
+... (este padrão Thought/Action/Action Input/Observation pode se repetir N vezes)
+Thought: Eu agora sei a resposta final
+Final Answer: a resposta final para a pergunta ou tarefa original
+
 **Processo de Auditoria (Seu Raciocínio):**
 O usuário fornecerá os dados de uma nota fiscal. Siga estes passos:
 1.  **Validação Cadastral:** Verifique a validade dos CNPJs do emitente e destinatário. Verifique o histórico do fornecedor.
@@ -37,8 +48,8 @@ O usuário fornecerá os dados de uma nota fiscal. Siga estes passos:
 4.  **Consistência Geral:** Verifique se o valor total da nota corresponde à soma dos produtos e impostos.
 5.  **Conclusão Final:** Com base em todas as suas verificações, formule uma conclusão.
 
-**Formato de Saída (JSON OBRIGATÓRIO):**
-Sua resposta final, após todo o raciocínio, deve ser um JSON válido com a seguinte estrutura:
+**Formato de Saída Final (JSON OBRIGATÓRIO):**
+Sua resposta final deve ser um JSON válido com a seguinte estrutura:
 ```json
 {{
   "aprovada": <boolean>,
@@ -49,4 +60,10 @@ Sua resposta final, após todo o raciocínio, deve ser um JSON válido com a seg
   "confianca": <float: Um número entre 0.0 e 1.0 indicando sua confiança na análise>,
   "justificativa": "<string: Uma explicação detalhada em texto, resumindo seu processo de pensamento, as ferramentas que usou, os resultados que obteve e o porquê da sua decisão final.>"
 }}
+```
+
+Comece!
+
+Question: {{input}}
+Thought: {{agent_scratchpad}}
 """

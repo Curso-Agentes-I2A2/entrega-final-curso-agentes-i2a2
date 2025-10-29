@@ -2,7 +2,8 @@
 
 import os
 from dotenv import load_dotenv
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 
 # Carrega variáveis de ambiente do arquivo .env
@@ -12,16 +13,21 @@ class LLMConfig(BaseModel):
     """Configurações para os Modelos de Linguagem."""
     primary_provider: str = "anthropic"
     primary_model: str = "claude-3-sonnet-20240229"
+
     fallback_provider: str = "openai"
-    fallback_model: str = "gpt-4-turbo"
+    secondary_model: str = "gpt-4-turbo"
+
+    tertiary_model: str = "gemini-2.5-flash"
+
     temperature: float = 0.1
     max_tokens: int = 2048
-    timeout: int = 120 # Timeout em segundos para chamadas ao LLM
+    timeout: int = 120
 
 class APIKeys(BaseModel):
     """Credenciais de API."""
     anthropic_api_key: str = os.getenv("ANTHROPIC_API_KEY")
     openai_api_key: str = os.getenv("OPENAI_API_KEY")
+    google_api_key: Optional[str] = Field(None, alias="GOOGLE_API_KEY")
 
 class ServiceUrls(BaseModel):
     """URLs para serviços externos."""
@@ -41,6 +47,28 @@ class AppConfig(BaseModel):
     api_keys: APIKeys = APIKeys()
     service_urls: ServiceUrls = ServiceUrls()
     agent: AgentConfig = AgentConfig()
+
+class LoggerConfig(BaseModel):
+    """
+    Configurações do logger.
+    """
+    level: str = "INFO"
+    format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    date_format: str = "%Y-%m-%d %H:%M:%S"
+
+class AppSettings(BaseSettings):
+    """
+    Configurações principais da aplicação, carregadas do .env.
+    """
+    model_config = SettingsConfigDict(
+        env_file=".env", 
+        env_nested_delimiter='__', 
+        env_file_encoding='utf-8', 
+        extra='ignore'
+    )
+    api_keys: APIKeys = Field(default_factory=APIKeys)
+    llm: LLMConfig = Field(default_factory=LLMConfig)
+    logging: LoggerConfig = Field(default_factory=LoggerConfig)
 
 # Instância global de configuração para ser importada em outros módulos
 settings = AppConfig()

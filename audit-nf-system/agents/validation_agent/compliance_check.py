@@ -1,7 +1,9 @@
 # agents/validation_agent/compliance_check.py
 
 import re
+import logging
 from typing import Dict
+logger = logging.getLogger(__name__)
 
 class ComplianceCheck:
     """

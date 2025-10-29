@@ -57,7 +57,7 @@ async def startup_event():
     """Executa ações quando a aplicação inicia."""
     logger.info("Aplicação iniciada com sucesso.")
     logger.info(f"LLM Primário: {settings.llm.primary_provider} ({settings.llm.primary_model})")
-    logger.info(f"LLM Fallback: {settings.llm.fallback_provider} ({settings.llm.fallback_model})")
+    logger.info(f"LLM Fallback: {settings.llm.fallback_provider} ({settings.llm.secondary_model})")
 
 @app.on_event("shutdown")
 def shutdown_event():

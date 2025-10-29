@@ -27,7 +27,11 @@ class AuditAgent:
     def __init__(self):
         self.llm = create_llm_with_fallback()
         self.tools: List[BaseTool] = self._setup_tools()
-        self.prompt = PromptTemplate.from_template(AUDIT_PROMPT_TEMPLATE)
+        self.prompt = PromptTemplate.from_template(
+            AUDIT_PROMPT_TEMPLATE,
+            template_format="f-string",
+            partial_variables={}
+        )
         
         # Cria o agente ReAct
         agent = create_react_agent(self.llm, self.tools, self.prompt)
@@ -109,8 +113,19 @@ class AuditAgent:
             # O resultado final do agente está na chave 'output'
             output = result.get("output", {})
             
-            logger.info(f"Auditoria concluída. Resultado: {output}")
-            return output
+            import json
+            try:
+                parsed_output = json.loads(output)
+                logger.info(f"Auditoria concluída. Resultado: {parsed_output}")
+                return parsed_output
+            except json.JSONDecodeError:
+                logger.warning("O agente não retornou um JSON válido. Retornando resposta em texto.")
+                return {
+                    "aprovada": False,
+                    "irregularidades": ["Resposta do agente não está em formato JSON válido"],
+                    "confianca": 0.5,
+                    "justificativa": f"Resposta do agente: {output}"
+                }
 
         except Exception as e:
             logger.error(f"Erro inesperado durante a auditoria: {e}", exc_info=True)
@@ -127,33 +142,59 @@ if __name__ == '__main__':
 
     async def main():
         # Exemplo de NF-e para auditoria
+        # sample_invoice = {
+        #     "numero": "98765",
+        #     "serie": "1",
+        #     "cnpj_emitente": "12.345.678/0001-99", # CNPJ fictício
+        #     "cnpj_destinatario": "98.765.432/0001-11", # CNPJ fictício
+        #     "data_emissao": "2025-10-23",
+        #     "valor_total": 1500.00,
+        #     "valor_produtos": 1500.00,
+        #     "itens": [
+        #         {
+        #             "codigo": "PROD001",
+        #             "descricao": "Componente Eletrônico XYZ",
+        #             "ncm": "85423190",
+        #             "cfop": "5102", # Venda de mercadoria adquirida ou recebida de terceiros
+        #             "quantidade": 10,
+        #             "valor_unitario": 150.00,
+        #             "valor_total": 1500.00
+        #         }
+        #     ],
+        #     "impostos": {
+        #         "base_calculo_icms": 1500.00,
+        #         "valor_icms": 270.00, # 18% de 1500
+        #         "valor_pis": 24.75, # 1.65% de 1500
+        #         "valor_cofins": 114.00 # 7.6% de 1500
+        #     },
+        #     "xml_content": "<xml>...</xml>" # Conteúdo simplificado
+        # }
         sample_invoice = {
-            "numero": "98765",
-            "serie": "1",
-            "cnpj_emitente": "12.345.678/0001-99", # CNPJ fictício
-            "cnpj_destinatario": "98.765.432/0001-11", # CNPJ fictício
-            "data_emissao": "2025-10-23",
-            "valor_total": 1500.00,
-            "valor_produtos": 1500.00,
-            "itens": [
+            "Numero": "98765",
+            "Serie": "1",
+            "Emitente_CNPJCPF": "12.345.678/0001-99",
+            "Destinatario_CNPJCPF": "98.765.432/0001-11",
+            "DataEmissao": "2025-10-23",
+            "ValorTotalNota": 1500.00,
+            "ValorICMS": 270.00,
+            "ValorIPI": 0.00,
+            "ValorPIS": 24.75,
+            "ValorCOFINS": 114.00,
+            "ValorDesconto": 0.00,
+            "items": [
                 {
-                    "codigo": "PROD001",
-                    "descricao": "Componente Eletrônico XYZ",
-                    "ncm": "85423190",
-                    "cfop": "5102", # Venda de mercadoria adquirida ou recebida de terceiros
-                    "quantidade": 10,
-                    "valor_unitario": 150.00,
-                    "valor_total": 1500.00
+                    "Codigo": "PROD001",
+                    "Descricao": "Componente Eletrônico XYZ",
+                    "NCM": "85423190",
+                    "CFOP": "5102",
+                    "Quantidade": 10,
+                    "ValorUnitario": 150.00,
+                    "ValorTotalItem": 1500.00
                 }
             ],
-            "impostos": {
-                "base_calculo_icms": 1500.00,
-                "valor_icms": 270.00, # 18% de 1500
-                "valor_pis": 24.75, # 1.65% de 1500
-                "valor_cofins": 114.00 # 7.6% de 1500
-            },
-            "xml_content": "<xml>...</xml>" # Conteúdo simplificado
+            "xml_content": "<NFe>...</NFe>"
         }
+
 
         auditor = AuditAgent()
         result = await auditor.audit_invoice(sample_invoice)
