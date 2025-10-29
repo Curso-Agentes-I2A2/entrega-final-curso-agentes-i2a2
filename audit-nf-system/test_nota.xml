@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe">
+    <nfe:NFe xmlns:nfe="http://www.portalfiscal.inf.br/nfe">
+        
+        <nfe:infNFe Id="NFe35251011222333000144550010000123451000000018">
+            
+            <nfe:ide>
+                <nfe:nNF>12345</nfe:nNF>
+                <nfe:serie>1</nfe:serie>
+                <nfe:dhEmi>2025-10-21T10:00:00-03:00</nfe:dhEmi>
+                <nfe:natOp>VENDA DE MERCADORIA</nfe:natOp>
+            </nfe:ide>
+
+            <nfe:emit>
+                <nfe:CNPJ>11222333000144</nfe:CNPJ>
+                <nfe:xNome>EMPRESA EMITENTE LTDA</nfe:xNome>
+            </nfe:emit>
+
+            <nfe:dest>
+                <nfe:CNPJ>55666777000188</nfe:CNPJ>
+                <nfe:xNome>EMPRESA DESTINATARIA SA</nfe:xNome>
+            </nfe:dest>
+            
+            <nfe:det nItem="1">
+                <nfe:prod>
+                    <nfe:vProd>1400.00</nfe:vProd>
+                </nfe:prod>
+                <nfe:imposto>
+                    <nfe:ICMS>
+                        <nfe:ICMS00>
+                            <nfe:vBC>1400.00</nfe:vBC>
+                            <nfe:pICMS>18.00</nfe:pICMS>
+                            <nfe:vICMS>252.00</nfe:vICMS>
+                        </nfe:ICMS00>
+                    </nfe:ICMS>
+                    <nfe:IPI>
+                        <nfe:IPITrib>
+                            <nfe:vIPI>70.00</nfe:vIPI>
+                        </nfe:IPITrib>
+                    </nfe:IPI>
+                </nfe:imposto>
+            </nfe:det>
+
+            <nfe:total>
+                <nfe:ICMSTot>
+                    <nfe:vBC>1400.00</nfe:vBC>
+                    <nfe:vICMS>252.00</nfe:vICMS>
+                    <nfe:vProd>1400.00</nfe:vProd>
+                    <nfe:vIPI>70.00</nfe:vIPI>
+                    <nfe:vPIS>0.00</nfe:vPIS>
+                    <nfe:vCOFINS>0.00</nfe:vCOFINS>
+                    <nfe:vFrete>0.00</nfe:vFrete>
+                    <nfe:vSeg>0.00</nfe:vSeg>
+                    <nfe:vDesc>0.00</nfe:vDesc>
+                    <nfe:vNF>1470.00</nfe:vNF> 
+                </nfe:ICMSTot>
+            </nfe:total>
+
+        </nfe:infNFe>
+    </nfe:NFe>
+</nfeProc>
