@@ -1,205 +1,482 @@
-# agents/audit_agent/agent.py
+"""
+Agente de Auditoria de NF-e
+Responsável por analisar notas fiscais e identificar irregularidades
+"""
 
 import logging
-from typing import List, Dict, Any
+import json
+from typing import Dict, List, Optional, Any
+from datetime import datetime
 
-from langchain.agents import AgentExecutor, create_react_agent
-from langchain_core.prompts import PromptTemplate
-from langchain_core.tools import BaseTool
-from ..utils.llm_factory import create_llm_with_fallback
-from ..tools.rag_tool import RAGTool
-from ..tools.calculator_tool import TaxCalculatorTool
-from ..tools.mcp_tools import ValidateCNPJTool, CheckSupplierHistoryTool
-from ..config import settings
-from .prompts import AUDIT_PROMPT_TEMPLATE
-from .rules_engine import run_financial_rules # Importa a função de regras de validacao triplice
+from langchain.agents import AgentExecutor, create_openai_tools_agent
+from langchain_anthropic import ChatAnthropic
+from langchain_openai import ChatOpenAI
+from langchain.schema import HumanMessage, SystemMessage
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
-# Configuração do logger
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+from config import settings, AUDIT_AGENT_CONFIG
+from audit_agent.prompts import SYSTEM_PROMPT, AUDIT_TEMPLATE
+from audit_agent.rules_engine import RulesEngine
+from tools.calculator_tool import TaxCalculatorTool
+
 logger = logging.getLogger(__name__)
 
 class AuditAgent:
     """
-    Agente especializado na auditoria fiscal e de conformidade de notas fiscais.
-    Utiliza o padrão ReAct para raciocinar e atuar, usando um conjunto de
-    ferramentas para buscar informações, realizar cálculos e validações.
+    Agente especializado em auditoria fiscal de Notas Fiscais Eletrônicas
+    
+    Responsabilidades:
+    - Validar cálculo de impostos (ICMS, IPI, PIS, COFINS)
+    - Verificar conformidade com legislação brasileira
+    - Identificar inconsistências e fraudes
+    - Consultar base de conhecimento (RAG) quando necessário
+    - Gerar relatório detalhado de auditoria
     """
+    
     def __init__(self):
-        self.llm = create_llm_with_fallback()
-        self.tools: List[BaseTool] = self._setup_tools()
-        self.prompt = PromptTemplate.from_template(
-            AUDIT_PROMPT_TEMPLATE,
-            template_format="f-string",
-            partial_variables={}
-        )
+        """
+        Inicializa o agente de auditoria
+        """
+        logger.info("🔍 Inicializando Agente de Auditoria...")
         
-        # Cria o agente ReAct
-        agent = create_react_agent(self.llm, self.tools, self.prompt)
+        # Configurar LLM primário (Claude)
+        self.llm = self._setup_llm()
         
-        # Cria o executor do agente, que gerencia o loop de execução
+        # Fallback LLM (GPT-4)
+        self.fallback_llm = self._setup_fallback_llm() if settings.OPENAI_API_KEY else None
+        
+        # Motor de regras fiscais
+        self.rules_engine = RulesEngine()
+        
+        # Tools disponíveis para o agente
+        self.tools = self._setup_tools()
+        
+        # Criar agente LangChain
+        self.agent = self._create_agent()
+        
+        # Executor do agente
         self.agent_executor = AgentExecutor(
-            agent=agent,
+            agent=self.agent,
             tools=self.tools,
-            verbose=True,  # Mostra os passos do agente no console (bom para debug)
-            handle_parsing_errors=True, # Trata erros de parsing da saída do LLM
-            max_iterations=10, # Evita loops infinitos
+            verbose=settings.DEBUG,
+            max_iterations=10,
+            max_execution_time=settings.API_TIMEOUT,
+            return_intermediate_steps=True,
         )
-
-    def _setup_tools(self) -> List[BaseTool]:
-        """Inicializa e retorna a lista de ferramentas disponíveis para o agente."""
-        return [
-            RAGTool(),
-            TaxCalculatorTool(),
-            ValidateCNPJTool(),
-            CheckSupplierHistoryTool(),
-        ]
-
-    async def audit_invoice(self, invoice_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Executa a auditoria completa de uma nota fiscal.
-
-        Passos:
-            1. Realiza verificacao de regras deterministicas (Validação Tríplice) antes de enviar a llm.
-            2. Se a regra falhar, retorna o resultado imediatamente.
-            3. Se a regra passar, invoca o agente LLM para auditoria avançada.
-
-        Args:
-            invoice_data: Um dicionário contendo os dados da nota fiscal.
-
-        Returns:
-            Um dicionário com o resultado da auditoria no formato JSON.
-        """
-        # 1. Executa as regras financeiras determinísticas (Validação Tríplice)
-        financial_check = run_financial_rules(invoice_data)
-        if not financial_check["passed"]:
-            logger.warning("Auditoria falhou na regra determinística: Validação Tríplice.")
-            return {
-                "aprovada": False,
-                "irregularidades": [financial_check["message"]],
-                "confianca": 1.0, # 100% de confiança, pois é uma regra
-                "justificativa": "Falha na validação financeira determinística (Validação Tríplice). O agente LLM não foi invocado."
-            }
-
-        # 2. Se passou nas regras, invoca o agente LLM para auditoria avançada
-        input_data = f"""
-        Audite a seguinte nota fiscal.
-
-        [INFORMAÇÃO IMPORTANTE]: A nota já passou na Validação Tríplice (financeira) com a seguinte mensagem: {financial_check['message']}.
-        Concentre-se em outras irregularidades (fiscais, cadastrais, etc.).
-
-        Dados da Nota:
-        - Número: {invoice_data.get('Numero')}
-        - Chave de Acesso: {invoice_data.get('ChaveAcesso')}
-        - CNPJ Emitente: {invoice_data.get('Emitente_CNPJCPF')}
-        - CNPJ Destinatário: {invoice_data.get('Destinatario_CNPJCPF')}
-        - Valor Total Declarado: {invoice_data.get('ValorTotalNota')}
-        - Impostos (resumo): 
-            - ICMS: {invoice_data.get('ValorICMS')}
-            - IPI: {invoice_data.get('ValorIPI')}
-            - PIS: {invoice_data.get('ValorPIS')}
-            - COFINS: {invoice_data.get('ValorCOFINS')}
         
-        - Itens da Nota (para análise fiscal):
-        {invoice_data.get('items', 'Nenhum item listado.')}
+        logger.info("✅ Agente de Auditoria inicializado")
+    
+    def _setup_llm(self) -> ChatAnthropic:
         """
-
-        logger.info("Regra determinística (Validação Tríplice) APROVADA.\nInvocando agente LLM...")
-
-        # 3. Invoca o agente llm
-        try:            
-            # Invoca o agente de forma assíncrona
-            result = await self.agent_executor.ainvoke(input_data)
+        Configura o LLM principal (Claude)
+        """
+        return ChatAnthropic(
+            model=AUDIT_AGENT_CONFIG["model"],
+            temperature=AUDIT_AGENT_CONFIG["temperature"],
+            max_tokens=AUDIT_AGENT_CONFIG["max_tokens"],
+            anthropic_api_key=settings.ANTHROPIC_API_KEY,
+            timeout=settings.API_TIMEOUT,
+        )
+    
+    def _setup_fallback_llm(self) -> Optional[ChatOpenAI]:
+        """
+        Configura LLM de fallback (GPT-4)
+        """
+        if not settings.OPENAI_API_KEY:
+            return None
+        
+        return ChatOpenAI(
+            model=settings.OPENAI_MODEL,
+            temperature=settings.OPENAI_TEMPERATURE,
+            max_tokens=settings.OPENAI_MAX_TOKENS,
+            openai_api_key=settings.OPENAI_API_KEY,
+            timeout=settings.API_TIMEOUT,
+        )
+    
+    def _setup_tools(self) -> List:
+        """
+        Configura ferramentas disponíveis para o agente
+        """
+        tools = []
+        
+        # Tool de cálculo de impostos
+        tools.append(TaxCalculatorTool())
+        logger.info("  ✓ Tax Calculator Tool habilitada")
+        
+        # Adicionar mais tools conforme necessário
+        
+        return tools
+    
+    def _create_agent(self):
+        """
+        Cria o agente LangChain com prompt e tools
+        """
+        # Criar prompt template
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", SYSTEM_PROMPT),
+            ("human", AUDIT_TEMPLATE),
+            MessagesPlaceholder(variable_name="agent_scratchpad"),
+        ])
+        
+        # Criar agente
+        agent = create_openai_tools_agent(
+            llm=self.llm,
+            tools=self.tools,
+            prompt=prompt
+        )
+        
+        return agent
+    
+    async def audit_invoice(
+        self,
+        invoice_data: Dict[str, Any],
+        context: Optional[Dict] = None
+    ) -> Dict[str, Any]:
+        """
+        Audita uma nota fiscal
+        
+        Args:
+            invoice_data: Dados da nota fiscal
+            context: Contexto adicional (histórico do fornecedor, etc)
+        
+        Returns:
+            Dict com resultado da auditoria:
+            {
+                "aprovada": bool,
+                "irregularidades": List[str],
+                "confianca": float,
+                "justificativa": str,
+                "detalhes": {...},
+                "timestamp": str
+            }
+        """
+        logger.info(f"🔍 Iniciando auditoria da NF {invoice_data.get('numero', 'N/A')}")
+        
+        start_time = datetime.utcnow()
+        
+        try:
+            # 1. Validações rápidas com motor de regras
+            rule_violations = await self._apply_rules(invoice_data)
             
-            # O resultado final do agente está na chave 'output'
-            output = result.get("output", {})
+            # 2. Se houver violações críticas, rejeitar imediatamente
+            critical_violations = [v for v in rule_violations if v.get("severity") == "critical"]
             
-            import json
-            try:
-                parsed_output = json.loads(output)
-                logger.info(f"Auditoria concluída. Resultado: {parsed_output}")
-                return parsed_output
-            except json.JSONDecodeError:
-                logger.warning("O agente não retornou um JSON válido. Retornando resposta em texto.")
-                return {
-                    "aprovada": False,
-                    "irregularidades": ["Resposta do agente não está em formato JSON válido"],
-                    "confianca": 0.5,
-                    "justificativa": f"Resposta do agente: {output}"
-                }
-
+            if critical_violations and settings.VALIDATION_STRICT_MODE:
+                logger.warning(f"⚠️ Violações críticas encontradas: {len(critical_violations)}")
+                return self._build_rejection_response(critical_violations, invoice_data)
+            
+            # 3. Análise profunda com LLM
+            llm_analysis = await self._analyze_with_llm(invoice_data, context, rule_violations)
+            
+            # 4. Consolidar resultado
+            result = self._consolidate_results(
+                invoice_data=invoice_data,
+                rule_violations=rule_violations,
+                llm_analysis=llm_analysis,
+                start_time=start_time
+            )
+            
+            # Log resultado
+            status = "✅ APROVADA" if result["aprovada"] else "❌ REPROVADA"
+            logger.info(
+                f"{status} - NF {invoice_data.get('numero')} - "
+                f"Confiança: {result['confianca']:.2%} - "
+                f"Irregularidades: {len(result['irregularidades'])}"
+            )
+            
+            return result
+            
         except Exception as e:
-            logger.error(f"Erro inesperado durante a auditoria: {e}", exc_info=True)
+            logger.error(f"❌ Erro na auditoria: {e}", exc_info=True)
+            
+            # Tentar com fallback LLM
+            if self.fallback_llm:
+                logger.info("🔄 Tentando com LLM de fallback...")
+                try:
+                    return await self._audit_with_fallback(invoice_data, context)
+                except Exception as fallback_error:
+                    logger.error(f"❌ Fallback também falhou: {fallback_error}")
+            
+            # Retornar erro estruturado
             return {
                 "aprovada": False,
-                "irregularidades": ["Erro interno no sistema de auditoria."],
+                "irregularidades": [f"Erro no processamento: {str(e)}"],
                 "confianca": 0.0,
-                "justificativa": f"Ocorreu uma exceção: {str(e)}",
+                "justificativa": "Auditoria não pôde ser concluída devido a erro técnico",
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat()
             }
-
-# Exemplo de uso (para testes locais)
-if __name__ == '__main__':
-    import asyncio
-
-    async def main():
-        # Exemplo de NF-e para auditoria
-        # sample_invoice = {
-        #     "numero": "98765",
-        #     "serie": "1",
-        #     "cnpj_emitente": "12.345.678/0001-99", # CNPJ fictício
-        #     "cnpj_destinatario": "98.765.432/0001-11", # CNPJ fictício
-        #     "data_emissao": "2025-10-23",
-        #     "valor_total": 1500.00,
-        #     "valor_produtos": 1500.00,
-        #     "itens": [
-        #         {
-        #             "codigo": "PROD001",
-        #             "descricao": "Componente Eletrônico XYZ",
-        #             "ncm": "85423190",
-        #             "cfop": "5102", # Venda de mercadoria adquirida ou recebida de terceiros
-        #             "quantidade": 10,
-        #             "valor_unitario": 150.00,
-        #             "valor_total": 1500.00
-        #         }
-        #     ],
-        #     "impostos": {
-        #         "base_calculo_icms": 1500.00,
-        #         "valor_icms": 270.00, # 18% de 1500
-        #         "valor_pis": 24.75, # 1.65% de 1500
-        #         "valor_cofins": 114.00 # 7.6% de 1500
-        #     },
-        #     "xml_content": "<xml>...</xml>" # Conteúdo simplificado
-        # }
-        sample_invoice = {
-            "Numero": "98765",
-            "Serie": "1",
-            "Emitente_CNPJCPF": "12.345.678/0001-99",
-            "Destinatario_CNPJCPF": "98.765.432/0001-11",
-            "DataEmissao": "2025-10-23",
-            "ValorTotalNota": 1500.00,
-            "ValorICMS": 270.00,
-            "ValorIPI": 0.00,
-            "ValorPIS": 24.75,
-            "ValorCOFINS": 114.00,
-            "ValorDesconto": 0.00,
-            "items": [
-                {
-                    "Codigo": "PROD001",
-                    "Descricao": "Componente Eletrônico XYZ",
-                    "NCM": "85423190",
-                    "CFOP": "5102",
-                    "Quantidade": 10,
-                    "ValorUnitario": 150.00,
-                    "ValorTotalItem": 1500.00
-                }
-            ],
-            "xml_content": "<NFe>...</NFe>"
+    
+    async def _apply_rules(self, invoice_data: Dict) -> List[Dict]:
+        """
+        Aplica regras do motor de regras
+        """
+        violations = []
+        
+        # Validar ICMS
+        icms_errors = self.rules_engine.check_icms(invoice_data)
+        violations.extend([
+            {
+                "type": "ICMS",
+                "message": error,
+                "severity": "critical" if "incorreto" in error.lower() else "medium"
+            }
+            for error in icms_errors
+        ])
+        
+        # Validar CFOP
+        cfop = invoice_data.get("cfop", "")
+        operation = invoice_data.get("tipo_operacao", "venda")
+        
+        if not self.rules_engine.check_cfop(cfop, operation):
+            violations.append({
+                "type": "CFOP",
+                "message": f"CFOP {cfop} incompatível com operação {operation}",
+                "severity": "critical"
+            })
+        
+        # Validar consistência de valores
+        value_errors = self.rules_engine.check_value_consistency(invoice_data)
+        violations.extend([
+            {
+                "type": "VALOR",
+                "message": error,
+                "severity": "medium"
+            }
+            for error in value_errors
+        ])
+        
+        return violations
+    
+    async def _analyze_with_llm(
+        self,
+        invoice_data: Dict,
+        context: Optional[Dict],
+        rule_violations: List[Dict]
+    ) -> Dict:
+        """
+        Análise profunda com LLM
+        """
+        # Preparar input para o agente
+        input_data = {
+            "invoice": json.dumps(invoice_data, indent=2, ensure_ascii=False),
+            "context": json.dumps(context or {}, indent=2, ensure_ascii=False),
+            "rule_violations": json.dumps(rule_violations, indent=2, ensure_ascii=False),
         }
-
-
-        auditor = AuditAgent()
-        result = await auditor.audit_invoice(sample_invoice)
-        print("\n--- Resultado Final da Auditoria ---")
-        import json
-        print(json.dumps(result, indent=2, ensure_ascii=False))
-
-    asyncio.run(main())
+        
+        # Executar agente
+        result = await self.agent_executor.ainvoke(input_data)
+        
+        # Parsear output
+        output = result.get("output", "")
+        
+        try:
+            # Tentar parsear JSON
+            analysis = json.loads(output)
+        except json.JSONDecodeError:
+            # Se não for JSON, extrair informações do texto
+            analysis = {
+                "reasoning": output,
+                "approved": "aprovar" in output.lower() or "sem irregularidades" in output.lower(),
+                "confidence": 0.7,
+                "findings": []
+            }
+        
+        return analysis
+    
+    def _consolidate_results(
+        self,
+        invoice_data: Dict,
+        rule_violations: List[Dict],
+        llm_analysis: Dict,
+        start_time: datetime
+    ) -> Dict:
+        """
+        Consolida resultados da auditoria
+        """
+        # Coletar todas as irregularidades
+        irregularidades = []
+        
+        # Violações de regras
+        for violation in rule_violations:
+            irregularidades.append({
+                "tipo": violation["type"],
+                "mensagem": violation["message"],
+                "severidade": violation["severity"],
+                "fonte": "motor_de_regras"
+            })
+        
+        # Findings do LLM
+        llm_findings = llm_analysis.get("findings", [])
+        for finding in llm_findings:
+            if isinstance(finding, str):
+                irregularidades.append({
+                    "tipo": "ANALISE_LLM",
+                    "mensagem": finding,
+                    "severidade": "medium",
+                    "fonte": "llm"
+                })
+            elif isinstance(finding, dict):
+                irregularidades.append({
+                    **finding,
+                    "fonte": "llm"
+                })
+        
+        # Determinar aprovação
+        critical_count = len([i for i in irregularidades if i.get("severidade") == "critical"])
+        llm_approved = llm_analysis.get("approved", True)
+        
+        aprovada = (critical_count == 0) and llm_approved
+        
+        # Calcular confiança
+        base_confidence = llm_analysis.get("confidence", 0.8)
+        penalty = min(len(irregularidades) * 0.05, 0.3)  # Max 30% de penalidade
+        confianca = max(base_confidence - penalty, 0.0)
+        
+        # Se não aprovada, confiança deve ser baixa
+        if not aprovada and confianca > 0.7:
+            confianca = 0.7
+        
+        # Construir justificativa
+        justificativa = self._build_justification(
+            aprovada=aprovada,
+            irregularidades=irregularidades,
+            llm_reasoning=llm_analysis.get("reasoning", "")
+        )
+        
+        # Tempo de processamento
+        processing_time = (datetime.utcnow() - start_time).total_seconds()
+        
+        return {
+            "aprovada": aprovada,
+            "irregularidades": [i["mensagem"] for i in irregularidades],
+            "irregularidades_detalhadas": irregularidades,
+            "confianca": round(confianca, 3),
+            "justificativa": justificativa,
+            "detalhes": {
+                "numero_nf": invoice_data.get("numero"),
+                "cnpj_emitente": invoice_data.get("cnpj_emitente"),
+                "valor_total": invoice_data.get("valor_total"),
+                "total_irregularidades": len(irregularidades),
+                "criticas": critical_count,
+                "medias": len([i for i in irregularidades if i.get("severidade") == "medium"]),
+                "llm_analysis": llm_analysis,
+                "processing_time_seconds": round(processing_time, 2)
+            },
+            "timestamp": datetime.utcnow().isoformat(),
+            "agent": "AuditAgent",
+            "version": "1.0.0"
+        }
+    
+    def _build_rejection_response(self, violations: List[Dict], invoice_data: Dict) -> Dict:
+        """
+        Constrói resposta de rejeição rápida
+        """
+        return {
+            "aprovada": False,
+            "irregularidades": [v["message"] for v in violations],
+            "irregularidades_detalhadas": violations,
+            "confianca": 0.95,  # Alta confiança na rejeição
+            "justificativa": (
+                f"Nota fiscal rejeitada automaticamente devido a {len(violations)} "
+                f"violação(ões) crítica(s) de regras fiscais. "
+                "Correções necessárias antes de prosseguir."
+            ),
+            "detalhes": {
+                "numero_nf": invoice_data.get("numero"),
+                "cnpj_emitente": invoice_data.get("cnpj_emitente"),
+                "rejeicao_automatica": True,
+                "violacoes_criticas": len(violations)
+            },
+            "timestamp": datetime.utcnow().isoformat(),
+            "agent": "AuditAgent",
+            "version": "1.0.0"
+        }
+    
+    def _build_justification(
+        self,
+        aprovada: bool,
+        irregularidades: List[Dict],
+        llm_reasoning: str
+    ) -> str:
+        """
+        Constrói justificativa da decisão
+        """
+        if aprovada and len(irregularidades) == 0:
+            return (
+                "Nota fiscal aprovada. Todos os campos foram validados e "
+                "não foram identificadas irregularidades fiscais ou inconsistências nos cálculos."
+            )
+        
+        if aprovada and len(irregularidades) > 0:
+            return (
+                f"Nota fiscal aprovada com ressalvas. Foram identificadas {len(irregularidades)} "
+                f"irregularidade(s) de baixa severidade que não impedem a aprovação, mas requerem atenção. "
+                f"{llm_reasoning[:200]}"
+            )
+        
+        critical = [i for i in irregularidades if i.get("severidade") == "critical"]
+        
+        if critical:
+            return (
+                f"Nota fiscal reprovada. Foram identificadas {len(critical)} irregularidade(s) crítica(s) "
+                f"que impedem a aprovação: {', '.join([i['mensagem'][:50] for i in critical[:3]])}. "
+                "Correções são necessárias antes de reprocessar."
+            )
+        
+        return (
+            f"Nota fiscal reprovada. Análise identificou {len(irregularidades)} irregularidade(s) "
+            f"que comprometem a conformidade fiscal. {llm_reasoning[:200]}"
+        )
+    
+    async def _audit_with_fallback(
+        self,
+        invoice_data: Dict,
+        context: Optional[Dict]
+    ) -> Dict:
+        """
+        Tenta auditoria com LLM de fallback
+        """
+        logger.info("🔄 Executando auditoria com fallback LLM")
+        
+        # Construir prompt simples
+        prompt = f"""
+        Você é um auditor fiscal especializado em Notas Fiscais Eletrônicas do Brasil.
+        
+        Analise a seguinte nota fiscal e identifique irregularidades:
+        
+        {json.dumps(invoice_data, indent=2, ensure_ascii=False)}
+        
+        Retorne sua análise em formato JSON:
+        {{
+            "approved": true/false,
+            "confidence": 0.0-1.0,
+            "findings": ["irregularidade 1", "irregularidade 2"],
+            "reasoning": "justificativa da decisão"
+        }}
+        """
+        
+        messages = [
+            SystemMessage(content="Você é um auditor fiscal especializado."),
+            HumanMessage(content=prompt)
+        ]
+        
+        response = await self.fallback_llm.ainvoke(messages)
+        
+        # Parsear resposta
+        try:
+            analysis = json.loads(response.content)
+        except:
+            analysis = {
+                "approved": False,
+                "confidence": 0.5,
+                "findings": ["Análise inconclusiva"],
+                "reasoning": response.content
+            }
+        
+        return self._consolidate_results(
+            invoice_data=invoice_data,
+            rule_violations=[],
+            llm_analysis=analysis,
+            start_time=datetime.utcnow()
+        )

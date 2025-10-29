@@ -1,24 +1,27 @@
-# Python
+﻿# Python
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
+*.pyc
+*.pyo
+*.egg-info/
 venv/
-ENV/
-.venv
+.venv/
+env/
+
+# Environment Variables
+.env
+*.env
+!.env.example
+.env.local
+
+# Logs
+*.log
+agents.log
 
 # IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
-
-# Environment variables
-.env
-.env.local
 
 # Databases
 *.db
