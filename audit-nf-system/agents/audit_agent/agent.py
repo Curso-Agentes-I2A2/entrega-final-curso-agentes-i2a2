@@ -6,13 +6,13 @@ from typing import List, Dict, Any
 from langchain.agents import AgentExecutor, create_react_agent
 from langchain_core.prompts import PromptTemplate
 from langchain_core.tools import BaseTool
-
+from ..utils.llm_factory import create_llm_with_fallback
 from ..tools.rag_tool import RAGTool
 from ..tools.calculator_tool import TaxCalculatorTool
 from ..tools.mcp_tools import ValidateCNPJTool, CheckSupplierHistoryTool
 from ..config import settings
 from .prompts import AUDIT_PROMPT_TEMPLATE
-from ..utils.llm_factory import create_llm_with_fallback
+from .rules_engine import run_financial_rules # Importa a função de regras de validacao triplice
 
 # Configuração do logger
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -54,18 +54,55 @@ class AuditAgent:
         """
         Executa a auditoria completa de uma nota fiscal.
 
+        Passos:
+            1. Realiza verificacao de regras deterministicas (Validação Tríplice) antes de enviar a llm.
+            2. Se a regra falhar, retorna o resultado imediatamente.
+            3. Se a regra passar, invoca o agente LLM para auditoria avançada.
+
         Args:
             invoice_data: Um dicionário contendo os dados da nota fiscal.
 
         Returns:
             Um dicionário com o resultado da auditoria no formato JSON.
         """
-        logger.info(f"Iniciando auditoria para a nota fiscal: {invoice_data.get('numero')}")
+        # 1. Executa as regras financeiras determinísticas (Validação Tríplice)
+        financial_check = run_financial_rules(invoice_data)
+        if not financial_check["passed"]:
+            logger.warning("Auditoria falhou na regra determinística: Validação Tríplice.")
+            return {
+                "aprovada": False,
+                "irregularidades": [financial_check["message"]],
+                "confianca": 1.0, # 100% de confiança, pois é uma regra
+                "justificativa": "Falha na validação financeira determinística (Validação Tríplice). O agente LLM não foi invocado."
+            }
+
+        # 2. Se passou nas regras, invoca o agente LLM para auditoria avançada
+        input_data = f"""
+        Audite a seguinte nota fiscal.
+
+        [INFORMAÇÃO IMPORTANTE]: A nota já passou na Validação Tríplice (financeira) com a seguinte mensagem: {financial_check['message']}.
+        Concentre-se em outras irregularidades (fiscais, cadastrais, etc.).
+
+        Dados da Nota:
+        - Número: {invoice_data.get('Numero')}
+        - Chave de Acesso: {invoice_data.get('ChaveAcesso')}
+        - CNPJ Emitente: {invoice_data.get('Emitente_CNPJCPF')}
+        - CNPJ Destinatário: {invoice_data.get('Destinatario_CNPJCPF')}
+        - Valor Total Declarado: {invoice_data.get('ValorTotalNota')}
+        - Impostos (resumo): 
+            - ICMS: {invoice_data.get('ValorICMS')}
+            - IPI: {invoice_data.get('ValorIPI')}
+            - PIS: {invoice_data.get('ValorPIS')}
+            - COFINS: {invoice_data.get('ValorCOFINS')}
         
-        try:
-            # A chave 'input' é padrão para o AgentExecutor
-            input_data = {"invoice_data": str(invoice_data)}
-            
+        - Itens da Nota (para análise fiscal):
+        {invoice_data.get('items', 'Nenhum item listado.')}
+        """
+
+        logger.info("Regra determinística (Validação Tríplice) APROVADA.\nInvocando agente LLM...")
+
+        # 3. Invoca o agente llm
+        try:            
             # Invoca o agente de forma assíncrona
             result = await self.agent_executor.ainvoke(input_data)
             
