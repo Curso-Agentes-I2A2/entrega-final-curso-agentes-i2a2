@@ -14,7 +14,7 @@ PIS_COFINS_RATES = {
     "nao_cumulativo": {"pis": 0.0165, "cofins": 0.076},
 }
 
-def calculate_icms(base_value: float, state_uf: str) -> Dict[str, float]:
+def calculate_icms(base_value: float, state_uf: str) -> Dict[str, Union[float, str]]:
     """Calcula o ICMS com base no valor e estado."""
     aliquota = ICMS_RATES.get(state_uf.upper(), ICMS_RATES["DEFAULT"])
     icms_value = base_value * aliquota
@@ -45,7 +45,7 @@ def calculate_ipi(base_value: float, ncm: str) -> Dict[str, Union[float, str]]:
         "ipi_value": round(ipi_value, 2)
     }
 
-def calculate_pis_cofins(base_value: float, regime: str) -> Dict[str, float]:
+def calculate_pis_cofins(base_value: float, regime: str) -> Dict[str, Union[float, str]]:
     """
     Calcula PIS e COFINS com base no regime tributário.
     Regime pode ser 'cumulativo' ou 'nao_cumulativo'.

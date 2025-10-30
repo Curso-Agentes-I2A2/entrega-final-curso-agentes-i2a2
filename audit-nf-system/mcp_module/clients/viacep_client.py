@@ -1,5 +1,4 @@
 # mcp/clients/viacep_client.py
-
 import httpx
 import logging
 from cachetools import TTLCache

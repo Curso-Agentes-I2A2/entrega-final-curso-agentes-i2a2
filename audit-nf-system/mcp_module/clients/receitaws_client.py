@@ -1,5 +1,3 @@
-# mcp/clients/receitaws_client.py
-
 import httpx
 import asyncio
 import logging

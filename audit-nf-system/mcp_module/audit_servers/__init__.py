@@ -1,4 +1,3 @@
-# mcp/servers/__init__.py
 """Servidores MCP."""
 
 from .audit_server import audit_server

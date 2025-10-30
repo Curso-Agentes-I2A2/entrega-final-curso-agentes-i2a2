@@ -1,4 +1,3 @@
-# mcp/clients/__init__.py
 """Clientes HTTP para APIs externas."""
 
 from .brasilapi_client import brasilapi_client

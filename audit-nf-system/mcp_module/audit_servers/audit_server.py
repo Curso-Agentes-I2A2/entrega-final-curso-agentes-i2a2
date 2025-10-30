@@ -1,34 +1,20 @@
-# MUDANÇA 1: O caminho do arquivo agora é 'audit_servers/audit_server.py'
-# (Assumindo que você renomeou a pasta 'mcp' para 'audit_servers')
-
 import logging
-# MUDANÇA 2: Importamos FastMCP da biblioteca 'mcp' instalada
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel, Field
 from typing import Optional
-import json
-
-# MUDANÇA (Corrigido): Importações absolutas de dentro do pacote mcp_module
 from mcp_module.tools import calculation_tools, validation_tools, external_api_tools
 from mcp_module.clients.rag_client import rag_client
 
-# Configuração do logging (mantido)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-# MUDANÇA 4: Instanciamos o FastMCP com um nome e descrição.
 audit_server = FastMCP(
     "AuditServer",
     "Servidor de ferramentas para auditoria fiscal e consulta de NF-e."
 )
-
-# ============================================================================
-# SCHEMAS DE INPUT/OUTPUT COM PYDANTIC
-# (Mantidos exatamente como estavam. Perfeito!)
-# ============================================================================
 
 class FiscalQueryInput(BaseModel):
     query: str = Field(description="Pergunta sobre legislação fiscal")
@@ -73,22 +59,6 @@ class SupplierHistoryInput(BaseModel):
     cnpj: str = Field(description="CNPJ do fornecedor")
 
 
-# ============================================================================
-# MUDANÇA 5: O 'HANDLER CENTRAL' FOI REMOVIDO.
-# ============================================================================
-
-# ============================================================================
-# MUDANÇA 6: A 'LISTA DE FERRAMENTAS' MANUAL FOI REMOVIDA.
-# O FastMCP gera isso automaticamente a partir dos decoradores abaixo.
-# ============================================================================
-
-
-# ============================================================================
-# IMPLEMENTAÇÕES DAS FERRAMENTAS
-# MUDANÇA 7: Cada função é agora uma ferramenta pública com o decorador
-# @audit_server.tool(). A 'docstring' é a nova 'description'.
-# ============================================================================
-
 @audit_server.tool()
 async def consult_fiscal_regulation(p: FiscalQueryInput) -> dict:
     """
@@ -101,7 +71,7 @@ async def consult_fiscal_regulation(p: FiscalQueryInput) -> dict:
         state=p.state,
         tax_type=p.tax_type
     )
-    # MUDANÇA 8: Apenas retorne o dicionário/objeto. O MCP cuida do resto.
+   
     return result
 
 @audit_server.tool()
@@ -125,7 +95,6 @@ async def verify_access_key(p: AccessKeyInput) -> dict:
     """
     Valida chave de acesso de NF-e (formato e dígito verificador).
     """
-    # MUDANÇA 9: Usamos o Pydantic model 'p' para validação e clareza.
     from ..tools.validation_tools import validate_access_key_format, validate_access_key_digits
     
     key = p.access_key
@@ -202,12 +171,9 @@ async def check_supplier_history(p: SupplierHistoryInput) -> dict:
     """
     Verifica o histórico de um fornecedor (simulado).
     """
-    # (Adicionei o 'p' e o 'SupplierHistoryInput' para consistência)
     result = {"cnpj": p.cnpj, "total_invoices": 15, "status": "Regular"}
     return result
 
 
 logger.info("✅ Audit Server MCP (FastMCP) carregado")
 
-# MUDANÇA 10: REMOVIDO o 'if __name__ == "__main__":'
-# O 'main.py' é o único responsável por executar o servidor.

@@ -6,9 +6,6 @@ from cachetools import TTLCache
 from typing import Dict, Any
 
 from ..config import api_settings, network_settings, cache_settings
-
-# Configuração do cache
-# Cache com TTL de 5 minutos e máximo de 128 entradas
 api_cache = TTLCache(maxsize=cache_settings.DEFAULT_MAX_SIZE, ttl=cache_settings.DEFAULT_TTL)
 
 class BrasilAPIClient:
