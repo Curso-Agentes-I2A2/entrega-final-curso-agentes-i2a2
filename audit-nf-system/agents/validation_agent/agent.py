@@ -188,14 +188,55 @@ class ValidationAgent:
         
         return errors
     
-    def _validate_access_key(self, key: str) -> Dict[str, Any]:
+    # def _validate_access_key(self, key: str) -> Dict[str, Any]:
+    #     """
+    #     Valida chave de acesso da NF-e
+        
+    #     Formato: 44 dígitos
+    #     Estrutura: UF(2) + AAMM(4) + CNPJ(14) + Modelo(2) + Serie(3) + Numero(9) + Tipo(1) + Codigo(8) + DV(1)
+    #     """
+    #     # Remover espaços e caracteres não numéricos
+    #     clean_key = re.sub(r'[^0-9]', '', key)
+        
+    #     # Verificar tamanho
+    #     if len(clean_key) != 44:
+    #         return {
+    #             "valid": False,
+    #             "error": f"Chave de acesso deve ter 44 dígitos (fornecido: {len(clean_key)})"
+    #         }
+        
+    #     # Validar dígito verificador
+    #     # Simplificado - em produção, usar cálculo real do módulo 11
+    #     dv_fornecido = int(clean_key[-1])
+    #     dv_calculado = self._calculate_access_key_dv(clean_key[:-1])
+        
+    #     if dv_fornecido != dv_calculado:
+    #         return {
+    #             "valid": False,
+    #             "error": f"Dígito verificador inválido (esperado {dv_calculado}, fornecido {dv_fornecido})"
+    #         }
+        
+    #     return {"valid": True}
+    # (Opcional, mas recomendado: mude o 'key: str' para 'key: str | None')
+    def _validate_access_key(self, key: str | None) -> Dict[str, Any]:
         """
         Valida chave de acesso da NF-e
-        
-        Formato: 44 dígitos
-        Estrutura: UF(2) + AAMM(4) + CNPJ(14) + Modelo(2) + Serie(3) + Numero(9) + Tipo(1) + Codigo(8) + DV(1)
+        ...
         """
+        
+        # -----------------------------------------------------------------
+        # CORREÇÃO: Adicione esta "guarda" no início da função
+        # -----------------------------------------------------------------
+        # Isso verifica se a 'key' é None ou uma string vazia
+        if not key:
+            return {
+                "valid": False,
+                "error": "Chave de acesso não fornecida (valor nulo ou vazio)"
+            }
+        # -----------------------------------------------------------------
+
         # Remover espaços e caracteres não numéricos
+        # Se o código chegou aqui, 'key' é uma string e re.sub é seguro
         clean_key = re.sub(r'[^0-9]', '', key)
         
         # Verificar tamanho

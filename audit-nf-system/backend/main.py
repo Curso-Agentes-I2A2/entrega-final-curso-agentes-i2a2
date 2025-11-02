@@ -14,6 +14,8 @@ import sys
 from config import settings
 from database.connection import init_db, close_db
 from api.routes import invoice_routes, audit_routes
+from api.routes import synthetic_routes
+from api.routes import dashboard_routes
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -198,7 +200,8 @@ async def root():
 # Inclusão de routers
 app.include_router(invoice_routes.router)
 app.include_router(audit_routes.router)
-
+app.include_router(synthetic_routes.router)
+app.include_router(dashboard_routes.router)
 
 # Ponto de entrada para execução direta
 if __name__ == "__main__":
