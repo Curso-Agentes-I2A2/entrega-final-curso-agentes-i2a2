@@ -245,13 +245,17 @@ class SyntheticNFeGenerator:
         cnpj_emitente: str,
         cnpj_destinatario: str,
         produtos: list,
-        valor_produtos: Decimal,
-        valor_icms: Decimal,
-        valor_ipi: Decimal,
-        valor_total: Decimal,
+       valor_produtos: Decimal | int,  # <-- 1. Permitir Decimal ou int
+        valor_icms: Decimal | int,      # <-- 1. Permitir Decimal ou int
+        valor_ipi: Decimal | int,       # <-- 1. Permitir Decimal ou int
+        valor_total: Decimal | int,     # <-- 1. Permitir Decimal ou int
         natureza_operacao: str
     ) -> str:
         """Monta XML completo da NF-e."""
+        valor_produtos = Decimal(valor_produtos)
+        valor_icms = Decimal(valor_icms)
+        valor_ipi = Decimal(valor_ipi)
+        valor_total = Decimal(valor_total)
         
         # Namespace
         ns = "http://www.portalfiscal.inf.br/nfe"
@@ -406,13 +410,13 @@ class SyntheticNFeGenerator:
         inf_adic = etree.SubElement(inf_nfe, f"{{{ns}}}infAdic")
         self._add_element(inf_adic, "infCpl", "Nota Fiscal Sintética para Testes", ns)
         
-        # Converte para string
-        return etree.tostring(
+        xml_bytes = etree.tostring(
             nfe_proc,
-            encoding='unicode',
+            encoding='utf-8',
             pretty_print=True,
             xml_declaration=True
         )
+        return xml_bytes.decode('utf-8')
     
     def _add_element(self, parent, tag: str, text: str, namespace: str):
         """Helper para adicionar elemento com namespace."""
