@@ -1,0 +1,11 @@
+Regulamento do ICMS - Seção I: Fato Gerador
+
+Art. 1º O Imposto sobre Operações Relativas à Circulação de Mercadorias e sobre Prestações de Serviços de Transporte Interestadual e Intermunicipal e de Comunicação (ICMS) incide sobre:
+I - operações relativas à circulação de mercadorias, inclusive o fornecimento de alimentação e bebidas em bares, restaurantes e estabelecimentos similares;
+II - prestações de serviços de transporte interestadual e intermunicipal, por qualquer via, de pessoas, bens, mercadorias ou valores;
+
+O cálculo do ICMS em operações dentro do estado de Santa Catarina utiliza a alíquota padrão de 17%, salvo exceções previstas em lei para produtos da cesta básica ou supérfluos. A base de cálculo é o valor da operação, incluindo frete e outras despesas debitadas ao adquirente.
+
+Para operações interestaduais, a alíquota varia conforme o estado de destino. Operações destinadas a contribuintes do ICMS nos estados do Sul e Sudeste (exceto Espírito Santo) aplicam uma alíquota de 12%. Para os demais estados e o Distrito Federal, a alíquota é de 7%. O diferencial de alíquota (DIFAL) deve ser recolhido quando a mercadoria é destinada a consumidor final não contribuinte do imposto em outro estado.
+
+A substituição tributária (ST) é um regime no qual a responsabilidade pelo recolhimento do ICMS é atribuída a um contribuinte diferente daquele que realiza o fato gerador. Geralmente, a indústria ou o importador recolhe o imposto devido por toda a cadeia de circulação subsequente, até o consumidor final. A base de cálculo da ST é o preço final ao consumidor, único ou máximo, fixado por autoridade competente, ou, na falta deste, o preço praticado pelo substituto, acrescido dos valores de frete e outras despesas e da margem de valor agregado (MVA).

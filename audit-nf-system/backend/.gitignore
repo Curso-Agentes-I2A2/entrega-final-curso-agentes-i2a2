@@ -1,0 +1,113 @@
+# ===================================================================
+# Segredos e Configurações Locais (NUNCA ENVIAR PARA O GIT)
+# ===================================================================
+# Arquivos de variáveis de ambiente que contêm senhas e chaves de API.
+.env
+.env.local
+.env.*.local
+*.env
+
+
+# ===================================================================
+# Ambiente Python e Dependências
+# ===================================================================
+# Pastas de ambiente virtual (venv, .venv, etc.).
+venv/
+.venv/
+.Python
+lib/
+lib64/
+
+# Arquivos de bytecode e compilação do Python.
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Ferramentas de gerenciamento de versão.
+.python-version
+
+
+# ===================================================================
+# Build, Pacotes e Distribuição do Python
+# ===================================================================
+build/
+dist/
+sdist/
+wheels/
+eggs/
+.eggs/
+parts/
+var/
+downloads/
+*.egg-info/
+*.egg
+develop-eggs/
+.installed.cfg
+
+
+# ===================================================================
+# IDEs, Editores e Arquivos do Sistema Operacional
+# ===================================================================
+# Configurações de editores de código.
+.vscode/
+.idea/
+*.sublime-workspace
+
+# Arquivos de backup e swap de editores (Vim, etc.).
+*.swp
+*.swo
+*~
+
+# Arquivos de metadados do sistema operacional.
+.DS_Store
+Thumbs.db
+desktop.ini
+
+
+# ===================================================================
+# Docker
+# ===================================================================
+# Arquivo para customizações locais do Docker Compose.
+docker-compose.override.yml
+
+
+# ===================================================================
+# Testes
+# ===================================================================
+# Cache e relatórios de ferramentas de teste.
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+
+# ===================================================================
+# Logs, Uploads e Arquivos Temporários
+# ===================================================================
+# Arquivos de log.
+*.log
+logs/
+
+# Arquivos temporários.
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Ignora o conteúdo da pasta de uploads, mas mantém a pasta no repo.
+# (Útil se a pasta `uploads` precisa existir, mas sem seus arquivos).
+uploads/*
+!uploads/.gitkeep
+
+
+# ===================================================================
+# Outros
+# ===================================================================
+# Bancos de dados locais (SQLite, etc.).
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache do Jupyter Notebook.
+.ipynb_checkpoints

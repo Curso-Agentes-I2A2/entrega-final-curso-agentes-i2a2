@@ -1,0 +1,214 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: audit-postgres
+    environment:
+      POSTGRES_DB: audit_nf_db
+      POSTGRES_USER: audit_user
+      POSTGRES_PASSWORD: audit_password_2024
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - audit-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U audit_user -d audit_nf_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: audit-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - audit-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ChromaDB Vector Database
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: audit-chromadb
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - ALLOW_RESET=true
+      #- ANONYMIZED_TELEMETRY=false
+    networks:
+      - audit-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: backend.Dockerfile
+    container_name: audit-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgresql://audit_user:audit_password_2024@postgres:5432/audit_nf_db
+      - REDIS_URL=redis://redis:6379
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      #- OPENAI_API_KEY=${OPENAI_API_KEY}
+      #- ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - JWT_SECRET=${JWT_SECRET:-default_secret_change_in_production}
+      - ENVIRONMENT=development
+    volumes:
+      - ./backend:/app
+      - ./shared:/app/shared
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - audit-network
+    command: uvicorn main:app --host 0.0.0.0 --port 8080 --reload
+
+  # RAG Service
+  rag:
+    build:
+      context: ./rag
+      dockerfile: rag.Dockerfile
+    container_name: audit-rag
+    ports:
+      - "8001:8001"
+    environment:
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      #- OPENAI_API_KEY=${OPENAI_API_KEY}
+      - EMBEDDING_MODEL=text-embedding-3-small
+    volumes:
+      - ./rag:/app
+      - ./shared:/app/shared
+      - rag_cache:/app/cache
+    networks:
+      - audit-network
+    command: python main.py
+
+  # Agents Service
+  agents:
+    build:
+      context: ./agents
+      dockerfile: agents.Dockerfile
+    container_name: audit-agents
+    ports:
+      - "8002:8002"
+    environment:
+      #- OPENAI_API_KEY=${OPENAI_API_KEY}
+      #- ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - RAG_SERVICE_URL=http://rag:8001
+      - BACKEND_URL=http://backend:8080
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./agents:/app
+      - ./shared:/app/shared
+    depends_on:
+      - backend
+      - rag
+      - redis
+    networks:
+      - audit-network
+    command: python main.py
+
+  # MCP Server
+  mcp:
+    build:
+      context: ./mcp
+      dockerfile: mcp.Dockerfile
+    container_name: audit-mcp
+    ports:
+      - "8003:8003"
+    environment:
+      - BACKEND_URL=http://backend:8080
+      - RAG_SERVICE_URL=http://rag:8001
+      - AGENTS_URL=http://agents:8002
+    volumes:
+      - ./mcp:/app
+      - ./shared:/app/shared
+    depends_on:
+      - backend
+      - rag
+      - agents
+    networks:
+      - audit-network
+    command: python servers/nf_context_server.py
+
+  # Frontend Streamlit
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: frontend.Dockerfile
+    container_name: audit-frontend
+    ports:
+      - "8501:8501"
+    environment:
+      - BACKEND_URL=http://backend:8080
+      - MCP_URL=http://mcp:8003
+    volumes:
+      - ./frontend:/app
+    depends_on:
+      - backend
+      - mcp
+    networks:
+      - audit-network
+    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
+
+  # Testes (serviço opcional)
+  tests:
+    build:
+      context: .
+      dockerfile: ./tests/tests.Dockerfile
+    container_name: audit-tests
+    environment:
+      - DATABASE_URL=postgresql://audit_user:audit_password_2024@postgres:5432/audit_nf_db
+      - BACKEND_URL=http://backend:8080
+      - FRONTEND_URL=http://frontend:8501
+      - REDIS_URL=redis://redis:6379
+      #- PYTEST_ARGS=${PYTEST_ARGS:--v}
+    volumes:
+      - ./tests:/app/tests
+      - ./backend:/app/backend
+      - ./rag:/app/rag
+      - ./agents:/app/agents
+      - ./mcp:/app/mcp
+      - ./frontend:/app/frontend
+      - test_reports:/app/reports
+    depends_on:
+      - postgres
+      - redis
+      - backend
+      - rag
+      - agents
+      - mcp
+      - frontend
+    networks:
+      - audit-network
+    profiles:
+      - testing
+    command: #pytest ${PYTEST_ARGS}
+
+volumes:
+  postgres_data:
+  redis_data:
+  chroma_data:
+  rag_cache:
+  test_reports:
+
+networks:
+  audit-network:
+    driver: bridge
